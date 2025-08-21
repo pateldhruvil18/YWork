@@ -1,12 +1,14 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.conf import settings
+from pymongo import MongoClient
 
-mongo_collection = settings.MONGO_DB["messages"]
+client = MongoClient("mongodb://localhost:27017/")
+db = client["chatdb"]
+messages = db["messages"]
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.group_name = self.scope["url_route"]["kwargs"]["dept_id"]
+        self.group_name = self.scope["url_route"]["kwargs"]["department_id"]
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -19,15 +21,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user = data.get("user", "Anonymous")
 
         # Save to MongoDB
-        mongo_collection.insert_one({
+        messages.insert_one({
             "group": self.group_name,
             "user": user,
             "message": message
         })
 
+        # Broadcast
         await self.channel_layer.group_send(
             self.group_name,
-            {"type": "chat_message", "message": message, "user": user}
+            {
+                "type": "chat_message",
+                "message": message,
+                "user": user
+            }
         )
 
     async def chat_message(self, event):

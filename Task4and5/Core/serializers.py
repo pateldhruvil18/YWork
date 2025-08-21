@@ -11,7 +11,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = Employee
         fields = "__all__"
 
-class LeaveApplicationSerializer(serializers.ModelSerializer):
+class LeaveSerializer(serializers.ModelSerializer):
     class Meta:
         model = LeaveApplication
         fields = "__all__"
